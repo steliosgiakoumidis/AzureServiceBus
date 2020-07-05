@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AzureServiceBus.CustomQueueClient.Bus\AzureServiceBus.CustomQueueClient.Bus.csproj" />
+    <ProjectReference Include="..\AzureServiceBus.CustomQueueClient.Bus\AzureServiceBus.Client.Bus.csproj" />
   </ItemGroup>
 
 </Project>

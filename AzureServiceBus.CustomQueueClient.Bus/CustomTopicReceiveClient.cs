@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.ServiceBus;
@@ -10,7 +9,7 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using Serilog;
 
-namespace AzureServiceBus.CustomQueueClient.Bus
+namespace AzureServiceBus.Client.Bus
 {
     public class CustomTopicReceiveClient
     {
@@ -42,7 +41,7 @@ namespace AzureServiceBus.CustomQueueClient.Bus
             TopicClient = CreateTopicClient();
         }
 
-        public CustomTopicReceiveClient(string serviceBusConnectionString, string topicName, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, string subscriptionName, bool enableBatchOperations,int maxDeliveryCount, int prefetchCount, bool autocomplete, int maxConcurrentMessages, int lockDurationInhSeconds)
+        public CustomTopicReceiveClient(string serviceBusConnectionString, string topicName, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, string subscriptionName, bool enableBatchOperations, int maxDeliveryCount, int prefetchCount, bool autocomplete, int maxConcurrentMessages, int lockDurationInhSeconds)
         {
             _serviceBusConnectionString = serviceBusConnectionString;
             _topicName = topicName;
@@ -59,22 +58,17 @@ namespace AzureServiceBus.CustomQueueClient.Bus
             _maxDeliveryCount = maxDeliveryCount;
             _maxConcurrentMessages = maxConcurrentMessages;
             _lockDurationInSeconds = TimeSpan.FromSeconds(lockDurationInhSeconds);
-            TopicClient = CreateTopicClient();
-
+            
             EnsureTopicSubscription().Wait();
+            TopicClient = CreateTopicClient();
         }
 
         private async Task EnsureTopicSubscription()
         {
             var context = new AuthenticationContext($"https://login.microsoftonline.com/{_tenantId}");
-
             var token = await context.AcquireTokenAsync("https://management.azure.com/", new ClientCredential(_clientId, _clientSecret));
-
             var creds = new TokenCredentials(token.AccessToken);
-            var sbClient = new ServiceBusManagementClient(creds)
-            {
-                SubscriptionId = _subscriptionId
-            };
+            var sbClient = new ServiceBusManagementClient(creds) { SubscriptionId = _subscriptionId };
             var subscriptionParameters = new SBSubscription()
             {
                 LockDuration = _lockDurationInSeconds,
@@ -82,7 +76,7 @@ namespace AzureServiceBus.CustomQueueClient.Bus
                 EnableBatchedOperations = _enableBatchOperations
             };
 
-            await sbClient.Subscriptions.CreateOrUpdateAsync(_resourceGroup, _namespaceName, 
+            await sbClient.Subscriptions.CreateOrUpdateAsync(_resourceGroup, _namespaceName,
                 _topicName, _subscriptionName, subscriptionParameters);
         }
 

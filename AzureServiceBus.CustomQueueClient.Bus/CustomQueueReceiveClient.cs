@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.ServiceBus.Core;
 using Serilog;
 
-namespace AzureServiceBus.CustomQueueClient.Bus
+namespace AzureServiceBus.Client.Bus
 {
     public class CustomQueueReceiveClient
     {

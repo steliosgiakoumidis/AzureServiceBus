@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.ServiceBus;
@@ -9,7 +8,7 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using Serilog;
 
-namespace AzureServiceBus.CustomQueueClient.Bus
+namespace AzureServiceBus.Client.Bus
 {
     public class CustomTopicSendClient
     {
@@ -54,21 +53,17 @@ namespace AzureServiceBus.CustomQueueClient.Bus
             _namespaceName = namespaceName;
             _enableExpress = enableExpress;
             _enableBatchOperations = enableBatchOperations;
+
+            EnsureTopic().Wait();
             TopicClient = CreateTopicClient();
-            CreateTopic().Wait();
         }
 
-        private async Task CreateTopic()
+        private async Task EnsureTopic()
         {
             var context = new AuthenticationContext($"https://login.microsoftonline.com/{_tenantId}");
-
             var token = await context.AcquireTokenAsync("https://management.azure.com/", new ClientCredential(_clientId, _clientSecret));
-
             var creds = new TokenCredentials(token.AccessToken);
-            var sbClient = new ServiceBusManagementClient(creds)
-            {
-                SubscriptionId = _subscriptionId
-            };
+            var sbClient = new ServiceBusManagementClient(creds) { SubscriptionId = _subscriptionId };
             var topicParams = new SBTopic()
             {
                 EnableExpress = _enableExpress,

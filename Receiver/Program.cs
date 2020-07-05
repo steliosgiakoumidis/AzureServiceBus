@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using AzureServiceBus.CustomQueueClient.Bus;
-using Microsoft.Azure.Management.ServiceBus;
-using Microsoft.Azure.Management.ServiceBus.Models;
 using Microsoft.Azure.ServiceBus;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Microsoft.Rest;
 
 namespace Receiver
 {

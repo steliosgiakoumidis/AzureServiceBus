@@ -2,9 +2,7 @@
 using System.Text;
 using System.Threading.Tasks;
 using AzureServiceBus.CustomQueueClient.Bus;
-using Microsoft.Azure.Management.ServiceBus;
 using Microsoft.Azure.ServiceBus;
-using Microsoft.Azure.ServiceBus.Core;
 
 namespace AzureServiceBus
 {

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.ServiceBus;
@@ -10,7 +9,7 @@ using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Rest;
 using Serilog;
 
-namespace AzureServiceBus.CustomQueueClient.Bus
+namespace AzureServiceBus.Client.Bus
 {
     public class CustomQueueSendClient
     {
@@ -31,7 +30,7 @@ namespace AzureServiceBus.CustomQueueClient.Bus
         private bool _enableBatchOperations;
         public MessageSender QueueClientSend;
 
-        public CustomQueueSendClient(string queueConnectionString, string queueName, int maxRetryCountOnSend, 
+        public CustomQueueSendClient(string queueConnectionString, string queueName, int maxRetryCountOnSend,
             int minimumBackOffInSeconds = 1, int maximumBackOffInSeconds = 10)
         {
             _queueConnectionString = queueConnectionString;
@@ -43,10 +42,10 @@ namespace AzureServiceBus.CustomQueueClient.Bus
         }
 
         public CustomQueueSendClient(string queueConnectionString, string queueName, int maxRetryCountOnSend,
-            string tenantId, string clientId, string clientSecret, string subscriptionId, 
-            string resourceGroupName, string namespaceName, 
+            string tenantId, string clientId, string clientSecret, string subscriptionId,
+            string resourceGroupName, string namespaceName,
             int lockDurationInSeconds, int maxDeliveryCount,
-            bool enableExpress, bool enableBatchOperations, 
+            bool enableExpress, bool enableBatchOperations,
             int minimumBackOffInSeconds = 1, int maximumBackOffInSeconds = 10)
         {
             _queueConnectionString = queueConnectionString;
@@ -64,21 +63,17 @@ namespace AzureServiceBus.CustomQueueClient.Bus
             _maxDeliveryCount = maxDeliveryCount;
             _enableExpress = enableExpress;
             _enableBatchOperations = enableBatchOperations;
+
+            EnsureQueue().Wait();
             QueueClientSend = CreateMessageSender();
-            CreateQueue().Wait();
         }
 
-        private async Task CreateQueue()
+        private async Task EnsureQueue()
         {
             var context = new AuthenticationContext($"https://login.microsoftonline.com/{_tenantId}");
-
             var token = await context.AcquireTokenAsync("https://management.azure.com/", new ClientCredential(_clientId, _clientSecret));
-
             var creds = new TokenCredentials(token.AccessToken);
-            var sbClient = new ServiceBusManagementClient(creds)
-            {
-                SubscriptionId = _subscriptionId
-            };
+            var sbClient = new ServiceBusManagementClient(creds) { SubscriptionId = _subscriptionId };
             var queueParams = new SBQueue()
             {
                 LockDuration = _lockDurationInSeconds,

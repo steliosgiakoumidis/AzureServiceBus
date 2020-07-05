@@ -54,7 +54,7 @@ namespace TopicSubscription
 
             // Complete the message so that it is not received again.
             // This can be done only if the subscriptionClient is created in ReceiveMode.PeekLock mode (which is the default).
-            
+
             await subscriptionClient.AbandonAsync(message.SystemProperties.LockToken);
             //await subscriptionClient.CompleteAsync(message.SystemProperties.LockToken);
 

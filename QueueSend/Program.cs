@@ -1,8 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.Azure.ServiceBus;
+﻿using System.Threading.Tasks;
 using AzureServiceBus.CustomQueueClient.Bus;
-using Microsoft.Azure.ServiceBus.Core;
 
 namespace QueueSend
 {
