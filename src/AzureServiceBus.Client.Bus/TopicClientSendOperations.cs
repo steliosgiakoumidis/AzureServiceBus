@@ -10,7 +10,7 @@ using Serilog;
 
 namespace AzureServiceBus.Client.Bus
 {
-    public class CustomTopicSendClient
+    public class TopicClientSendOperations
     {
         private string _serviceBusConnectionString;
         private string _topicName;
@@ -26,19 +26,19 @@ namespace AzureServiceBus.Client.Bus
         private bool _enableExpress;
         private bool _enableBatchOperations;
 
-        private ITopicClient TopicClient;
+        private ITopicClient CustomTopicClient;
 
-        public CustomTopicSendClient(string connectionString, string topicName, int minimumBackOff, int maximumBackOff, int maxRetryCountOnSend)
+        public TopicClientSendOperations(string connectionString, string topicName, int minimumBackOff, int maximumBackOff, int maxRetryCountOnSend)
         {
             _serviceBusConnectionString = connectionString;
             _topicName = topicName;
             _minimumBackOff = minimumBackOff;
             _maximumBackOff = maximumBackOff;
             _maxRetryCountOnSend = maxRetryCountOnSend;
-            TopicClient = CreateTopicClient();
+            CustomTopicClient = CreateTopicClient();
         }
 
-        public CustomTopicSendClient(string connectionString, string topicName, int minimumBackOff, int maximumBackOff, int maxRetryCountOnSend, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, bool enableExpress, bool enableBatchOperations)
+        public TopicClientSendOperations(string connectionString, string topicName, int minimumBackOff, int maximumBackOff, int maxRetryCountOnSend, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, bool enableExpress, bool enableBatchOperations)
         {
             _serviceBusConnectionString = connectionString;
             _topicName = topicName;
@@ -55,7 +55,7 @@ namespace AzureServiceBus.Client.Bus
             _enableBatchOperations = enableBatchOperations;
 
             EnsureTopic().Wait();
-            TopicClient = CreateTopicClient();
+            CustomTopicClient = CreateTopicClient();
         }
 
         private async Task EnsureTopic()
@@ -87,7 +87,7 @@ namespace AzureServiceBus.Client.Bus
         {
             try
             {
-                await TopicClient.SendAsync(new Message(Encoding.UTF8.GetBytes(message)));
+                await CustomTopicClient.SendAsync(new Message(Encoding.UTF8.GetBytes(message)));
 
                 return true;
             }

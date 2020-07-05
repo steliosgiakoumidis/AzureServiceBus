@@ -11,7 +11,7 @@ using Serilog;
 
 namespace AzureServiceBus.Client.Bus
 {
-    public class CustomQueueSendClient
+    public class QueueClientSendOperations
     {
         private string _queueConnectionString;
         private string _queueName;
@@ -28,9 +28,9 @@ namespace AzureServiceBus.Client.Bus
         private int _maxDeliveryCount;
         private bool _enableExpress;
         private bool _enableBatchOperations;
-        public MessageSender QueueClientSend;
+        public MessageSender CustomQueueClient;
 
-        public CustomQueueSendClient(string queueConnectionString, string queueName, int maxRetryCountOnSend,
+        public QueueClientSendOperations(string queueConnectionString, string queueName, int maxRetryCountOnSend,
             int minimumBackOffInSeconds = 1, int maximumBackOffInSeconds = 10)
         {
             _queueConnectionString = queueConnectionString;
@@ -38,10 +38,10 @@ namespace AzureServiceBus.Client.Bus
             _minimumBackOff = minimumBackOffInSeconds;
             _maximumBackOff = maximumBackOffInSeconds;
             _maxRetryCountOnSend = maxRetryCountOnSend;
-            QueueClientSend = CreateMessageSender();
+            CustomQueueClient = CreateMessageSender();
         }
 
-        public CustomQueueSendClient(string queueConnectionString, string queueName, int maxRetryCountOnSend,
+        public QueueClientSendOperations(string queueConnectionString, string queueName, int maxRetryCountOnSend,
             string tenantId, string clientId, string clientSecret, string subscriptionId,
             string resourceGroupName, string namespaceName,
             int lockDurationInSeconds, int maxDeliveryCount,
@@ -65,7 +65,7 @@ namespace AzureServiceBus.Client.Bus
             _enableBatchOperations = enableBatchOperations;
 
             EnsureQueue().Wait();
-            QueueClientSend = CreateMessageSender();
+            CustomQueueClient = CreateMessageSender();
         }
 
         private async Task EnsureQueue()
@@ -100,7 +100,7 @@ namespace AzureServiceBus.Client.Bus
         {
             try
             {
-                await QueueClientSend.SendAsync(new Message(Encoding.UTF8.GetBytes(message)));
+                await CustomQueueClient.SendAsync(new Message(Encoding.UTF8.GetBytes(message)));
 
                 return true;
             }

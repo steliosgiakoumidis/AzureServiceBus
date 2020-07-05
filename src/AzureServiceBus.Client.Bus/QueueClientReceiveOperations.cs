@@ -7,16 +7,16 @@ using Serilog;
 
 namespace AzureServiceBus.Client.Bus
 {
-    public class CustomQueueReceiveClient
+    public class QueueClientReceiveOperations
     {
         private string _queueConnectionString;
         private string _queueName;
         private int _prefetchCount;
         private bool _autocomplete;
         private int _maxConcurrentMessages;
-        public MessageReceiver QueueClientReceive;
+        private MessageReceiver CustomQueueClient;
 
-        public CustomQueueReceiveClient(string queueConnectionString, string queueName, int prefetchCount, bool autoComplete,
+        public QueueClientReceiveOperations(string queueConnectionString, string queueName, int prefetchCount, bool autoComplete,
             int maxConcurrentMessages)
         {
             _queueConnectionString = queueConnectionString;
@@ -24,7 +24,7 @@ namespace AzureServiceBus.Client.Bus
             _prefetchCount = prefetchCount;
             _autocomplete = autoComplete;
             _maxConcurrentMessages = maxConcurrentMessages;
-            QueueClientReceive = CreateMessageReceiver();
+            CustomQueueClient = CreateMessageReceiver();
         }
 
         private MessageReceiver CreateMessageReceiver()
@@ -36,13 +36,13 @@ namespace AzureServiceBus.Client.Bus
         {
             var task = Task.Run(() =>
             {
-                QueueClientReceive.RegisterMessageHandler(
+                CustomQueueClient.RegisterMessageHandler(
                     async (message, cancellationToken) =>
                     {
                         if (await messageHandler(Encoding.UTF8.GetString(message.Body)))
-                            await QueueClientReceive.CompleteAsync(message.SystemProperties.LockToken);
+                            await CustomQueueClient.CompleteAsync(message.SystemProperties.LockToken);
                         else
-                            await QueueClientReceive.AbandonAsync(message.SystemProperties.LockToken);
+                            await CustomQueueClient.AbandonAsync(message.SystemProperties.LockToken);
                     },
                     new MessageHandlerOptions(ExceptionReceivedHandler)
                     {

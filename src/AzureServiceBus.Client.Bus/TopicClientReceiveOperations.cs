@@ -11,7 +11,7 @@ using Serilog;
 
 namespace AzureServiceBus.Client.Bus
 {
-    public class CustomTopicReceiveClient
+    public class TopicClientReceiveOperations
     {
         private string _serviceBusConnectionString;
         private string _topicName;
@@ -28,9 +28,9 @@ namespace AzureServiceBus.Client.Bus
         private int _maxConcurrentMessages;
         private int _maxDeliveryCount;
         private TimeSpan? _lockDurationInSeconds;
-        public MessageReceiver TopicClient;
+        public MessageReceiver CustomTopicClient;
 
-        public CustomTopicReceiveClient(string serviceBusConnectionString, string topicName, string subscriptionName, int prefetchCount, bool autocomplete, int maxConcurrentMessages)
+        public TopicClientReceiveOperations(string serviceBusConnectionString, string topicName, string subscriptionName, int prefetchCount, bool autocomplete, int maxConcurrentMessages)
         {
             _serviceBusConnectionString = serviceBusConnectionString;
             _topicName = topicName;
@@ -38,10 +38,10 @@ namespace AzureServiceBus.Client.Bus
             _prefetchCount = prefetchCount;
             _autocomplete = autocomplete;
             _maxConcurrentMessages = maxConcurrentMessages;
-            TopicClient = CreateTopicClient();
+            CustomTopicClient = CreateTopicClient();
         }
 
-        public CustomTopicReceiveClient(string serviceBusConnectionString, string topicName, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, string subscriptionName, bool enableBatchOperations, int maxDeliveryCount, int prefetchCount, bool autocomplete, int maxConcurrentMessages, int lockDurationInhSeconds)
+        public TopicClientReceiveOperations(string serviceBusConnectionString, string topicName, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, string subscriptionName, bool enableBatchOperations, int maxDeliveryCount, int prefetchCount, bool autocomplete, int maxConcurrentMessages, int lockDurationInhSeconds)
         {
             _serviceBusConnectionString = serviceBusConnectionString;
             _topicName = topicName;
@@ -58,9 +58,9 @@ namespace AzureServiceBus.Client.Bus
             _maxDeliveryCount = maxDeliveryCount;
             _maxConcurrentMessages = maxConcurrentMessages;
             _lockDurationInSeconds = TimeSpan.FromSeconds(lockDurationInhSeconds);
-            
+
             EnsureTopicSubscription().Wait();
-            TopicClient = CreateTopicClient();
+            CustomTopicClient = CreateTopicClient();
         }
 
         private async Task EnsureTopicSubscription()
@@ -89,13 +89,13 @@ namespace AzureServiceBus.Client.Bus
         {
             var task = Task.Run(() =>
             {
-                TopicClient.RegisterMessageHandler(
+                CustomTopicClient.RegisterMessageHandler(
                     async (message, cancellationToken) =>
                     {
                         if (await messageHandler(Encoding.UTF8.GetString(message.Body)))
-                            await TopicClient.CompleteAsync(message.SystemProperties.LockToken);
+                            await CustomTopicClient.CompleteAsync(message.SystemProperties.LockToken);
                         else
-                            await TopicClient.AbandonAsync(message.SystemProperties.LockToken);
+                            await CustomTopicClient.AbandonAsync(message.SystemProperties.LockToken);
                     },
                     new MessageHandlerOptions(ExceptionReceivedHandler)
                     {
