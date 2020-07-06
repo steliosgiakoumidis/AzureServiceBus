@@ -20,9 +20,13 @@ namespace SendMessageExample.Controllers
         }
 
         [HttpGet]
-        public async Task Get()
+        public async Task<IActionResult> Get()
         {
             var messageSent = await _client.SendAsync("Message sent");
+            if (messageSent)
+                return StatusCode(200);
+            else
+                return StatusCode(500);
         }
     }
 }

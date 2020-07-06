@@ -13,7 +13,7 @@ namespace AzureServiceBus.Client.Bus
 {
     public class QueueClientSendOperations
     {
-        private string _queueConnectionString;
+        private string _serviceBusConnectionString;
         private string _queueName;
         private int _maxRetryCountOnSend;
         private int _minimumBackOff;
@@ -30,10 +30,10 @@ namespace AzureServiceBus.Client.Bus
         private bool _enableBatchOperations;
         public MessageSender CustomQueueClient;
 
-        public QueueClientSendOperations(string queueConnectionString, string queueName, int maxRetryCountOnSend,
+        public QueueClientSendOperations(string serviceBusConnectionString, string queueName, int maxRetryCountOnSend,
             int minimumBackOffInSeconds = 1, int maximumBackOffInSeconds = 10)
         {
-            _queueConnectionString = queueConnectionString;
+            _serviceBusConnectionString = serviceBusConnectionString;
             _queueName = queueName;
             _minimumBackOff = minimumBackOffInSeconds;
             _maximumBackOff = maximumBackOffInSeconds;
@@ -41,14 +41,14 @@ namespace AzureServiceBus.Client.Bus
             CustomQueueClient = CreateMessageSender();
         }
 
-        public QueueClientSendOperations(string queueConnectionString, string queueName, int maxRetryCountOnSend,
+        public QueueClientSendOperations(string serviceBusConnectionString, string queueName, int maxRetryCountOnSend,
             string tenantId, string clientId, string clientSecret, string subscriptionId,
             string resourceGroupName, string namespaceName,
-            int lockDurationInSeconds, int maxDeliveryCount,
-            bool enableExpress, bool enableBatchOperations,
+            int lockDurationInSeconds,
+            bool enableExpress, bool enableBatchOperations, int maxDeliveryCount = 10,
             int minimumBackOffInSeconds = 1, int maximumBackOffInSeconds = 10)
         {
-            _queueConnectionString = queueConnectionString;
+            _serviceBusConnectionString = serviceBusConnectionString;
             _queueName = queueName;
             _tenantId = tenantId;
             _clientId = clientId;
@@ -67,6 +67,24 @@ namespace AzureServiceBus.Client.Bus
             EnsureQueue().Wait();
             CustomQueueClient = CreateMessageSender();
         }
+
+        public async Task<bool> SendAsync(string message)
+        {
+            try
+            {
+                await CustomQueueClient.SendAsync(new Message(Encoding.UTF8.GetBytes(message)));
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"An exception occured when sending message to azure service bus: {ex}");
+
+                return false;
+            }
+        }
+
+        public async Task CloseAsync() => await CustomQueueClient.CloseAsync();
 
         private async Task EnsureQueue()
         {
@@ -93,23 +111,7 @@ namespace AzureServiceBus.Client.Bus
                 maximumRetryCount: _maxRetryCountOnSend
                 );
 
-            return new MessageSender(_queueConnectionString, _queueName, retryPolicy);
-        }
-
-        public async Task<bool> SendAsync(string message)
-        {
-            try
-            {
-                await CustomQueueClient.SendAsync(new Message(Encoding.UTF8.GetBytes(message)));
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"An exception occured when sending message to azure service bus: {ex}");
-
-                return false;
-            }
+            return new MessageSender(_serviceBusConnectionString, _queueName, retryPolicy);
         }
     }
 }

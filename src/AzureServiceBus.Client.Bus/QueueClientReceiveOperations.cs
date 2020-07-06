@@ -9,27 +9,22 @@ namespace AzureServiceBus.Client.Bus
 {
     public class QueueClientReceiveOperations
     {
-        private string _queueConnectionString;
+        private string _serviceBusConnectionString;
         private string _queueName;
         private int _prefetchCount;
         private bool _autocomplete;
         private int _maxConcurrentMessages;
         private MessageReceiver CustomQueueClient;
 
-        public QueueClientReceiveOperations(string queueConnectionString, string queueName, int prefetchCount, bool autoComplete,
+        public QueueClientReceiveOperations(string serviceBusConnectionString, string queueName, int prefetchCount, bool autoComplete,
             int maxConcurrentMessages)
         {
-            _queueConnectionString = queueConnectionString;
+            _serviceBusConnectionString = serviceBusConnectionString;
             _queueName = queueName;
             _prefetchCount = prefetchCount;
             _autocomplete = autoComplete;
             _maxConcurrentMessages = maxConcurrentMessages;
             CustomQueueClient = CreateMessageReceiver();
-        }
-
-        private MessageReceiver CreateMessageReceiver()
-        {
-            return new MessageReceiver(_queueConnectionString, _queueName, ReceiveMode.PeekLock, RetryPolicy.Default, _prefetchCount);
         }
 
         public void ListenToQueue(Func<string, Task<bool>> messageHandler)
@@ -50,6 +45,13 @@ namespace AzureServiceBus.Client.Bus
                         MaxConcurrentCalls = _maxConcurrentMessages
                     });
             });
+        }
+
+        public async Task CloseAsync() => await CustomQueueClient.CloseAsync();
+
+        private MessageReceiver CreateMessageReceiver()
+        {
+            return new MessageReceiver(_serviceBusConnectionString, _queueName, ReceiveMode.PeekLock, RetryPolicy.Default, _prefetchCount);
         }
 
         private Task ExceptionReceivedHandler(ExceptionReceivedEventArgs exceptionReceivedEventArgs)

@@ -41,7 +41,7 @@ namespace AzureServiceBus.Client.Bus
             CustomTopicClient = CreateTopicClient();
         }
 
-        public TopicClientReceiveOperations(string serviceBusConnectionString, string topicName, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, string subscriptionName, bool enableBatchOperations, int maxDeliveryCount, int prefetchCount, bool autocomplete, int maxConcurrentMessages, int lockDurationInhSeconds)
+        public TopicClientReceiveOperations(string serviceBusConnectionString, string topicName, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, string subscriptionName, bool enableBatchOperations, int prefetchCount, bool autocomplete, int maxConcurrentMessages, int lockDurationInhSeconds, int maxDeliveryCount = 10)
         {
             _serviceBusConnectionString = serviceBusConnectionString;
             _topicName = topicName;
@@ -63,6 +63,27 @@ namespace AzureServiceBus.Client.Bus
             CustomTopicClient = CreateTopicClient();
         }
 
+        public async Task CloseAsync() => await CustomTopicClient.CloseAsync();
+
+        public void Subscribe(Func<string, Task<bool>> messageHandler)
+        {
+            var task = Task.Run(() =>
+            {
+                CustomTopicClient.RegisterMessageHandler(
+                    async (message, cancellationToken) =>
+                    {
+                        if (await messageHandler(Encoding.UTF8.GetString(message.Body)))
+                            await CustomTopicClient.CompleteAsync(message.SystemProperties.LockToken);
+                        else
+                            await CustomTopicClient.AbandonAsync(message.SystemProperties.LockToken);
+                    },
+                    new MessageHandlerOptions(ExceptionReceivedHandler)
+                    {
+                        AutoComplete = _autocomplete,
+                        MaxConcurrentCalls = _maxConcurrentMessages
+                    });
+            });
+        }
         private async Task EnsureTopicSubscription()
         {
             var context = new AuthenticationContext($"https://login.microsoftonline.com/{_tenantId}");
@@ -83,26 +104,6 @@ namespace AzureServiceBus.Client.Bus
         private MessageReceiver CreateTopicClient()
         {
             return new MessageReceiver(_serviceBusConnectionString, _topicName, ReceiveMode.PeekLock, RetryPolicy.Default, _prefetchCount);
-        }
-
-        public void Subscribe(Func<string, Task<bool>> messageHandler)
-        {
-            var task = Task.Run(() =>
-            {
-                CustomTopicClient.RegisterMessageHandler(
-                    async (message, cancellationToken) =>
-                    {
-                        if (await messageHandler(Encoding.UTF8.GetString(message.Body)))
-                            await CustomTopicClient.CompleteAsync(message.SystemProperties.LockToken);
-                        else
-                            await CustomTopicClient.AbandonAsync(message.SystemProperties.LockToken);
-                    },
-                    new MessageHandlerOptions(ExceptionReceivedHandler)
-                    {
-                        AutoComplete = _autocomplete,
-                        MaxConcurrentCalls = _maxConcurrentMessages
-                    });
-            });
         }
 
         private Task ExceptionReceivedHandler(ExceptionReceivedEventArgs exceptionReceivedEventArgs)

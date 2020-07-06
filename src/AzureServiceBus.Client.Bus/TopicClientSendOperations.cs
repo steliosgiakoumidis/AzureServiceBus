@@ -28,9 +28,9 @@ namespace AzureServiceBus.Client.Bus
 
         private ITopicClient CustomTopicClient;
 
-        public TopicClientSendOperations(string connectionString, string topicName, int minimumBackOff, int maximumBackOff, int maxRetryCountOnSend)
+        public TopicClientSendOperations(string serviceBusConnectionString, string topicName, int maxRetryCountOnSend, int minimumBackOff = 1, int maximumBackOff = 10)
         {
-            _serviceBusConnectionString = connectionString;
+            _serviceBusConnectionString = serviceBusConnectionString;
             _topicName = topicName;
             _minimumBackOff = minimumBackOff;
             _maximumBackOff = maximumBackOff;
@@ -38,9 +38,9 @@ namespace AzureServiceBus.Client.Bus
             CustomTopicClient = CreateTopicClient();
         }
 
-        public TopicClientSendOperations(string connectionString, string topicName, int minimumBackOff, int maximumBackOff, int maxRetryCountOnSend, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, bool enableExpress, bool enableBatchOperations)
+        public TopicClientSendOperations(string serviceBusConnectionString, string topicName, int maxRetryCountOnSend, string tenantId, string clientId, string clientSecret, string subscriptionId, string resourceGroup, string namespaceName, bool enableExpress, bool enableBatchOperations, int minimumBackOff = 1, int maximumBackOff = 10)
         {
-            _serviceBusConnectionString = connectionString;
+            _serviceBusConnectionString = serviceBusConnectionString;
             _topicName = topicName;
             _minimumBackOff = minimumBackOff;
             _maximumBackOff = maximumBackOff;
@@ -57,6 +57,24 @@ namespace AzureServiceBus.Client.Bus
             EnsureTopic().Wait();
             CustomTopicClient = CreateTopicClient();
         }
+
+        public async Task<bool> SendAsync(string message)
+        {
+            try
+            {
+                await CustomTopicClient.SendAsync(new Message(Encoding.UTF8.GetBytes(message)));
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"An exception occured when send message to azure service bus: {ex}");
+
+                return false;
+            }
+        }
+
+        public async Task CloseAsync() => await CustomTopicClient.CloseAsync();
 
         private async Task EnsureTopic()
         {
@@ -81,22 +99,6 @@ namespace AzureServiceBus.Client.Bus
                 maximumRetryCount: _maxRetryCountOnSend
                 );
             return new TopicClient(_serviceBusConnectionString, _topicName, retryPolicy);
-        }
-
-        public async Task<bool> SendAsync(string message)
-        {
-            try
-            {
-                await CustomTopicClient.SendAsync(new Message(Encoding.UTF8.GetBytes(message)));
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"An exception occured when send message to azure service bus: {ex}");
-
-                return false;
-            }
         }
     }
 }
